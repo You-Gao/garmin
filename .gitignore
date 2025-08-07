@@ -1,0 +1,3 @@
+.ENV
+gifs/
+__pycache__/
