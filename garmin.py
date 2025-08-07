@@ -6,8 +6,9 @@ import keyboard
 import helpers.mistral as mistral
 import helpers.avatar as avatar
 import helpers.win32 as win32
-import helpers.spotify_control as spotify
+import helpers.spotify as spotify
 
+# DEFINE COMMANDS HERE
 COMMANDS = {
     ("hate", "game"): lambda command: keyboard.send('alt+f4'),
     ("clip", "that"): lambda command: print("Making a clip..."),
@@ -51,8 +52,10 @@ COMMANDS = {
     ("volume", "up"): lambda command: spotify.volume_up(),
     ("volume", "down"): lambda command: spotify.volume_down(),
     ("mute", "music"): lambda command: spotify.mute(),
+    ("play",): lambda command: spotify.play_artist(command.replace("play ", "")),
 
     # MISTRAL COMMANDS
+    # replace this with semantic analysis
     ("what",): lambda command: mistral.call_mistral_with_question(command), 
     ("who",): lambda command: mistral.call_mistral_with_question(command), 
     ("where",): lambda command: mistral.call_mistral_with_question(command), 
@@ -61,8 +64,7 @@ COMMANDS = {
     ("how",): lambda command: mistral.call_mistral_with_question(command), 
     ("thanks",): lambda command: os.system("taskkill /f /im WindowsTerminal.exe"),  # Close terminal after thanking
 }
-
-COMMAND = "" # Global variable to store the current command
+COMMAND = "" 
 
 def action(command):
     global COMMAND
@@ -87,26 +89,25 @@ def callback(recognizer, audio):
     except sr.RequestError as e:
         print("Could not request results from Google Speech Recognition service; {0}".format(e))
 
+# INITIALIZE RECOGNITION
 r = sr.Recognizer()
 m = sr.Microphone()
 
-# Optimized speech recognition settings
-r.pause_threshold = .7      # Reduced from 1.0 for faster response
-r.phrase_threshold = .3     # Minimum audio length to consider as speech
-r.non_speaking_duration = .7 # Minimum silence duration to split phrases
+r.pause_threshold = .7                      # How long to wait before considering speech ended
+r.phrase_threshold = .3                     # Minimum audio length to consider as speech
+r.non_speaking_duration = .7                # Minimum silence duration to split phrases
 r.dynamic_energy_adjustment_damping = 0.15  # Reduced for faster response
-r.energy_threshold = 400  # Set a higher threshold for better noise handling
+r.energy_threshold = 500                    # Set a higher threshold for better noise handling
 
-with m as source:
-    r.adjust_for_ambient_noise(source)
+with m as source: r.adjust_for_ambient_noise(source)
+r.listen_in_background(m, callback)
 
-stop_listening = r.listen_in_background(m, callback)
-
+# MAIN LOOP to UPDATE AVATAR ANIMATION AND RESPOND TO COMMANDS
 last_animation = None
 while True:
     if any(word in COMMAND for word in ["what", "who", "where", "when", "why", "how"]):
         if last_animation != "thinking":
-            avatar.start_gui_thread("thinking")  # Use threaded version
+            avatar.start_gui_thread("thinking")
             last_animation = "thinking"
     elif "open" in COMMAND or "close" in COMMAND:
         if last_animation != "active":
@@ -114,16 +115,16 @@ while True:
             last_animation = "active"
     elif "thanks" in COMMAND:
         if last_animation != "happy":
-            avatar.start_gui_thread("happy")  # Use threaded version
+            avatar.start_gui_thread("happy")
             last_animation = "happy"
     elif any(word in COMMAND for word in ["hate", "close"]):
         if last_animation != "angry":
-            avatar.start_gui_thread("angry")  # Use threaded version
+            avatar.start_gui_thread("angry")
             last_animation = "angry"
     else:
         if last_animation != "idle":
-            avatar.start_gui_thread("idle")  # Use threaded version
+            avatar.start_gui_thread("idle")
             last_animation = "idle"
 
-    time.sleep(1)  # loop
+    time.sleep(1) 
     
