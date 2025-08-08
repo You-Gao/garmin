@@ -52,6 +52,7 @@ COMMANDS = {
     ("volume", "up"): lambda command: spotify.volume_up(),
     ("volume", "down"): lambda command: spotify.volume_down(),
     ("mute", "music"): lambda command: spotify.mute(),
+    ("play", "by"): lambda command: spotify.play_artist_song(command.split("by ")[1].strip(), command.split("play ")[1].split(" by ")[0].strip()),
     ("play",): lambda command: spotify.play_artist(command.replace("play ", "")),
 
     # MISTRAL COMMANDS

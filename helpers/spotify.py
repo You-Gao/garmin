@@ -4,6 +4,7 @@ import ctypes
 from ctypes import wintypes
 
 import requests
+import random
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -83,7 +84,6 @@ def get_access_token():
         return None
 
 def get_headers(user_specific=False):
-    """Get headers for API requests"""
     if user_specific and OAUTH_AVAILABLE:
         try:
             token = get_valid_access_token()
@@ -110,9 +110,6 @@ def find_artist(artist_name):
         "type": "artist"
     }
     response = requests.get(url, headers=headers, params=params)
-    print(f"Searching for artist: {artist_name}")
-    print(f"Response: {response.status_code}")
-    print(f"Sent request to Spotify API: {url} with params: {params}")
     if response.status_code == 200:
         data = response.json()
         print(f"Searching for artist: {artist_name}")
@@ -122,9 +119,7 @@ def find_artist(artist_name):
     return None
 
 def play_artist(artist_name):
-    """Play an artist using Spotify Web API"""
     headers = get_headers(user_specific=True)
-    print(headers)
     if not headers:
         print("Failed to get Spotify access token")
         return
@@ -135,31 +130,99 @@ def play_artist(artist_name):
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
             tracks = response.json().get("tracks", [])
+            track_uri = random.choice(tracks)['uri']
+            play_url = "https://api.spotify.com/v1/me/player/queue"
+            data = {
+                "uris": [track_uri]
+            }
+            play_response = requests.post(play_url, headers=headers, json=data)
+            queue_tracks(tracks)
+            if play_response.status_code == 200:
+                print(f"Playing random track of {artist_name}")
+            elif play_response.status_code == 404:
+                print("No active Spotify device found. Please start Spotify and begin playing something first.")
+                play_pause_api() 
+                play_artist(artist_name)
+            elif play_response.status_code == 401:
+                print("Authorization failed. You may need to re-authorize the app.")
+            else:
+                print(f"Failed to start playback: {play_response.status_code}")
+                print("Falling back to media key...")
+                play_pause()  # Fall back to media key
+    else:
+        print(f"Artist '{artist_name}' not found")
+        
+def play_artist_song(artist_name, song_name):
+    headers = get_headers(user_specific=True)
+    if not headers:
+        print("Failed to get Spotify access token")
+        return
+    artist = find_artist(artist_name)
+    if artist:
+        url = f"https://api.spotify.com/v1/search"
+        data = {
+            "q": f"track:{song_name} artist:{artist_name}",
+            "type": "track"
+        }
+        response = requests.get(url, headers=headers, params=data)
+        if response.status_code == 200:
+            tracks = response.json().get("tracks", {}).get("items", [])
             if tracks:
-                track_uri = tracks[0]['uri']  # Play the first top track
-                play_url = "https://api.spotify.com/v1/me/player/play"
+                track_uri = tracks[0]['uri']
+                play_url = "https://api.spotify.com/v1/me/player/queue"
                 data = {
                     "uris": [track_uri]
                 }
-                print(headers)
-                play_response = requests.put(play_url, headers=headers, json=data)
-                if play_response.status_code == 204:
-                    print(f"Playing top track of {artist_name}")
+                play_response = requests.post(play_url, headers=headers, json=data)
+                if play_response.status_code == 200:
+                    print(f"Playing '{song_name}' by {artist_name}")
                 elif play_response.status_code == 404:
                     print("No active Spotify device found. Please start Spotify and begin playing something first.")
+                    play_pause_api()
+                    play_artist_song(artist_name, song_name)
                 elif play_response.status_code == 401:
                     print("Authorization failed. You may need to re-authorize the app.")
                 else:
                     print(f"Failed to start playback: {play_response.status_code}")
                     print("Falling back to media key...")
-                    play_pause()  # Fall back to media key
+                    play_pause()
             else:
-                print(f"No top tracks found for {artist_name}")
+                print(f"No tracks found for '{song_name}' by {artist_name}")
         else:
-            print(f"Error fetching top tracks: {response.status_code}")
+            print(f"Error searching for track: {response.status_code}")
+
+def queue_tracks(tracks):
+    headers = get_headers(user_specific=True)
+    if not headers:
+        print("Failed to get Spotify access token")
+        return
+
+    for track in random.sample(tracks, min(5, len(tracks))):
+        track_uri = track['uri']
+        print(track_uri)
+        queue_url = "https://api.spotify.com/v1/me/player/queue"
+        params = {
+            "uri": track_uri
+        }
+        queue_response = requests.post(queue_url, headers=headers, params=params)
+        if queue_response.status_code == 200:
+            print(f"Queued '{track['name']}' by {track['artists'][0]['name']}")
+        else:
+            print(f"Failed to queue track: {queue_response.status_code}")
+
+def play_pause_api():
+    headers = get_headers(user_specific=True)
+    if not headers:
+        print("Failed to get user access token")
+        return
+
+    play_url = "https://api.spotify.com/v1/me/player/play"
+    response = requests.put(play_url, headers=headers)
+    if response.status_code == 204:
+        print("Playback paused")
     else:
-        print(f"Artist '{artist_name}' not found")
-        
+        print(f"Failed to pause playback: {response.status_code}")
+
 def user_profile():
     headers = get_headers(user_specific=True)
     if not headers:
