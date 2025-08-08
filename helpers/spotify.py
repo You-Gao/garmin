@@ -51,6 +51,13 @@ def mute():
 CLIENT_ID = os.getenv("SPOTIFY_API_KEY")  
 CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")  
 
+# Import OAuth helper for user-specific operations
+try:
+    from .spotify_oauth import get_valid_access_token
+except ImportError:
+    from spotify_oauth import get_valid_access_token
+OAUTH_AVAILABLE = True
+
 def get_access_token():
     if not CLIENT_ID or not CLIENT_SECRET:
         print("Missing Spotify credentials. Add SPOTIFY_CLIENT_SECRET to .env file.")
@@ -75,7 +82,17 @@ def get_access_token():
         print(f"Failed to get access token: {response.status_code}")
         return None
 
-def get_headers():
+def get_headers(user_specific=False):
+    """Get headers for API requests"""
+    if user_specific and OAUTH_AVAILABLE:
+        try:
+            token = get_valid_access_token()
+            if token:
+                return {"Authorization": f"Bearer {token}"}
+        except Exception as e:
+            print(f"Failed to get user access token: {e}")
+            print("Falling back to client credentials...")
+    
     token = get_access_token()
     if token:
         return {"Authorization": f"Bearer {token}"}
@@ -105,7 +122,9 @@ def find_artist(artist_name):
     return None
 
 def play_artist(artist_name):
-    headers = get_headers()
+    """Play an artist using Spotify Web API"""
+    headers = get_headers(user_specific=True)
+    print(headers)
     if not headers:
         print("Failed to get Spotify access token")
         return
@@ -122,14 +141,36 @@ def play_artist(artist_name):
                 data = {
                     "uris": [track_uri]
                 }
-                requests.put(play_url, headers=headers, json=data)
-                print(f"Playing top track of {artist_name}")
+                print(headers)
+                play_response = requests.put(play_url, headers=headers, json=data)
+                if play_response.status_code == 204:
+                    print(f"Playing top track of {artist_name}")
+                elif play_response.status_code == 404:
+                    print("No active Spotify device found. Please start Spotify and begin playing something first.")
+                elif play_response.status_code == 401:
+                    print("Authorization failed. You may need to re-authorize the app.")
+                else:
+                    print(f"Failed to start playback: {play_response.status_code}")
+                    print("Falling back to media key...")
+                    play_pause()  # Fall back to media key
             else:
                 print(f"No top tracks found for {artist_name}")
         else:
             print(f"Error fetching top tracks: {response.status_code}")
     else:
         print(f"Artist '{artist_name}' not found")
+        
+def user_profile():
+    headers = get_headers(user_specific=True)
+    if not headers:
+        print("No user authorization. Falling back to media key...")
+        return
+    user_info = requests.get("https://api.spotify.com/v1/me", headers=headers)
+    if user_info.status_code == 200:
+        print(user_info.json())
+        return user_info.json()
+    return None
+
 
 if __name__ == "__main__":
-    pass
+    play_artist("Kendrick")

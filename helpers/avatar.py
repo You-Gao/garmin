@@ -70,12 +70,10 @@ def cleanup_gui():
         animated_gif = None
 
 def change_gif(new_gif_name):
-    """Change the GIF by updating the frames in the existing GUI"""
     global animated_gif, current_gif_name
     if root and animated_gif and current_gif_name != new_gif_name:
         try:
-            # Load new GIF frames
-            gif_path = os.path.join(os.path.dirname(__file__), f"{new_gif_name}.gif")
+            gif_path = os.path.join(os.path.dirname(__file__), new_gif_name)
             new_frames = []
             frame = 0
             while True:
@@ -85,7 +83,6 @@ def change_gif(new_gif_name):
                 except tk.TclError:
                     break
             
-            # Update the animated GIF with new frames
             if new_frames:
                 animated_gif.frames = new_frames
                 animated_gif.current_frame = 0
@@ -95,13 +92,11 @@ def change_gif(new_gif_name):
             print(f"Error changing GIF: {e}")
 
 def check_for_gif_change():
-    """Check if a new GIF has been requested"""
     global requested_gif_name, current_gif_name
     if requested_gif_name and requested_gif_name != current_gif_name:
         change_gif(requested_gif_name)
         requested_gif_name = None
     
-    # Schedule next check
     if root:
         root.after(100, check_for_gif_change)
 
@@ -121,10 +116,10 @@ def setup_gui(file_name):
     
     root.geometry("200x200+1100+625")  # width x height + x_offset + y_offset
     gif_path = os.path.join(os.path.dirname(__file__), f"gifs/{file_name}.gif")
-    animated_gif = AnimatedGIF(root, gif_path)
-    current_gif_name = file_name
     
-    # Start the GIF change checker
+    animated_gif = AnimatedGIF(root, gif_path)
+    current_gif_name = f"gifs/{file_name}.gif"
+
     check_for_gif_change()
     
     root.mainloop()
@@ -136,7 +131,8 @@ def start_gui_thread(file_name="gengar"):
     # If GUI is already running, just request a GIF change
     try:
         if root and root.winfo_exists():
-            requested_gif_name = file_name
+            requested_gif_name = f"gifs/{file_name}.gif"
+            print(f"Requested GIF change to: {file_name}")
             return gui_thread
     except tk.TclError:
         # Window was destroyed, need to start new one
@@ -149,9 +145,8 @@ def start_gui_thread(file_name="gengar"):
     return gui_thread
 
 def request_gif_change(file_name):
-    """Thread-safe way to request a GIF change"""
     global requested_gif_name
-    requested_gif_name = file_name
+    requested_gif_name = f"gifs/{file_name}.gif"
 
 def stop_avatar():
     cleanup_gui()
