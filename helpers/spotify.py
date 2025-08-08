@@ -40,10 +40,12 @@ def previous_track():
     send_key(VK_MEDIA_PREV_TRACK)
 
 def volume_up():
-    send_key(VK_VOLUME_UP)
+    for i in range(5):
+        send_key(VK_VOLUME_UP)
 
 def volume_down():
-    send_key(VK_VOLUME_DOWN)
+    for i in range(5):
+        send_key(VK_VOLUME_DOWN)
 
 def mute():
     send_key(VK_VOLUME_MUTE)
@@ -51,6 +53,8 @@ def mute():
 # SPOTIFY WEB API
 CLIENT_ID = os.getenv("SPOTIFY_API_KEY")  
 CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")  
+
+QUEUED_TRACKS = []
 
 # Import OAuth helper for user-specific operations
 try:
@@ -125,30 +129,13 @@ def play_artist(artist_name):
         return
         
     artist = find_artist(artist_name)
+    
     if artist:
         url = f"https://api.spotify.com/v1/artists/{artist['id']}/top-tracks?market=US"
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
             tracks = response.json().get("tracks", [])
-            track_uri = random.choice(tracks)['uri']
-            play_url = "https://api.spotify.com/v1/me/player/queue"
-            data = {
-                "uris": [track_uri]
-            }
-            play_response = requests.post(play_url, headers=headers, json=data)
             queue_tracks(tracks)
-            if play_response.status_code == 200:
-                print(f"Playing random track of {artist_name}")
-            elif play_response.status_code == 404:
-                print("No active Spotify device found. Please start Spotify and begin playing something first.")
-                play_pause_api() 
-                play_artist(artist_name)
-            elif play_response.status_code == 401:
-                print("Authorization failed. You may need to re-authorize the app.")
-            else:
-                print(f"Failed to start playback: {play_response.status_code}")
-                print("Falling back to media key...")
-                play_pause()  # Fall back to media key
     else:
         print(f"Artist '{artist_name}' not found")
         
@@ -164,16 +151,19 @@ def play_artist_song(artist_name, song_name):
             "q": f"track:{song_name} artist:{artist_name}",
             "type": "track"
         }
+        print(f"Searching for song: {song_name} by {artist_name}")
         response = requests.get(url, headers=headers, params=data)
+        print(response.text)
         if response.status_code == 200:
             tracks = response.json().get("tracks", {}).get("items", [])
             if tracks:
                 track_uri = tracks[0]['uri']
+                print(track_uri)
                 play_url = "https://api.spotify.com/v1/me/player/queue"
-                data = {
-                    "uris": [track_uri]
+                params = {
+                    "uri": track_uri
                 }
-                play_response = requests.post(play_url, headers=headers, json=data)
+                play_response = requests.post(play_url, headers=headers, params=params)
                 if play_response.status_code == 200:
                     print(f"Playing '{song_name}' by {artist_name}")
                 elif play_response.status_code == 404:
@@ -184,14 +174,13 @@ def play_artist_song(artist_name, song_name):
                     print("Authorization failed. You may need to re-authorize the app.")
                 else:
                     print(f"Failed to start playback: {play_response.status_code}")
-                    print("Falling back to media key...")
-                    play_pause()
             else:
                 print(f"No tracks found for '{song_name}' by {artist_name}")
         else:
             print(f"Error searching for track: {response.status_code}")
 
 def queue_tracks(tracks):
+    global QUEUED_TRACKS
     headers = get_headers(user_specific=True)
     if not headers:
         print("Failed to get Spotify access token")
@@ -207,8 +196,55 @@ def queue_tracks(tracks):
         queue_response = requests.post(queue_url, headers=headers, params=params)
         if queue_response.status_code == 200:
             print(f"Queued '{track['name']}' by {track['artists'][0]['name']}")
+            QUEUED_TRACKS.append(track)
         else:
             print(f"Failed to queue track: {queue_response.status_code}")
+
+def clear_queue():
+    global QUEUED_TRACKS
+    
+    headers = get_headers(user_specific=True)
+    if not headers:
+        print("Failed to get Spotify access token")
+        return
+    
+    queue = get_queue()
+
+    for item in queue.get("queue", []):
+        if item["name"] in [t['name'] for t in QUEUED_TRACKS]:
+            skip_current_track()
+            
+    QUEUED_TRACKS.clear()
+    return
+
+def get_queue():
+    headers = get_headers(user_specific=True)
+    if not headers:
+        print("Failed to get Spotify access token")
+        return
+    queue_url = "https://api.spotify.com/v1/me/player/queue"
+    response = requests.get(queue_url, headers=headers)
+    if response.status_code == 200:
+        return response.json()
+    return None
+
+def skip_current_track():
+    headers = get_headers(user_specific=True)
+    if not headers:
+        print("Failed to get Spotify access token")
+        return
+
+    skip_url = "https://api.spotify.com/v1/me/player/next"
+    response = requests.post(skip_url, headers=headers)
+    if response.status_code == 204:
+        print("Skipped to next track")
+    else:
+        print(f"Failed to skip track: {response.status_code}")
+
+def test_queue():
+    json = get_queue()
+    print(json["queue"])
+    print(len(json["queue"]))
 
 def play_pause_api():
     headers = get_headers(user_specific=True)
@@ -237,3 +273,4 @@ def user_profile():
 
 if __name__ == "__main__":
     play_artist("Kendrick")
+    clear_queue()

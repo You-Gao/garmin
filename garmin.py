@@ -28,20 +28,19 @@ COMMANDS = {
     ("close", "discord"): lambda command: os.system("taskkill /f /im Discord.exe"),
     ("open", "steam"): lambda command: os.system(r'start "" "C:\Program Files (x86)\Steam\Steam.exe"'),
     ("close", "steam"): lambda command: os.system("taskkill /f /im Steam.exe"),
-    ("open", "league"): lambda command: os.system(r'start "" "C:\Riot Games\League of Legends\LeagueClient.exe"'),
-    ("close", "league"): lambda command: os.system("taskkill /f /im LeagueClient.exe"),
     
-    # # GOTO COMMANDS
-    # ("go", "to", "chrome"): lambda command: win32.make_window_active("Google Chrome"),
-    # ("go", "to", "notepad"): lambda command: win32.make_window_active("Notepad"),
-    # ("go", "to", "code"): lambda command: win32.make_window_active("Visual Studio Code"),
-    # ("go", "to", "habitica"): lambda command: win32.make_window_active("Habitica"),
-    # ("go", "to", "spotify"): lambda command: win32.make_window_active("Spotify"),
-    # ("go", "to", "discord"): lambda command: win32.make_window_active("Discord"),
-    # ("go", "to", "steam"): lambda command: win32.make_window_active("Steam"),
-    # ("go", "to", "league"): lambda command: win32.make_window_active("League of Legends"),
+    # GOTOs (A bit buggy if using with Komorebic)
+    ("go", "to", "chrome"): lambda command: win32.make_window_active("Google Chrome"),
+    ("go", "to", "notepad"): lambda command: win32.make_window_active("Notepad"),
+    ("go", "to", "code"): lambda command: win32.make_window_active("Visual Studio Code"),
+    ("go", "to", "spotify"): lambda command: win32.make_window_active("Spotify"),
+    ("go", "to", "discord"): lambda command: win32.make_window_active("Discord"),
+    ("go", "to", "steam"): lambda command: win32.make_window_active("Steam"),
+    
+    # GOOGLE CHROME
+    ("google",): lambda command: os.system(rf'start "" "https://www.google.com/search?q={command}"'),
 
-    # SPOTIFY CONTROLS
+    # SPOTIFY 
     ("play", "music"): lambda command: spotify.play_pause(),
     ("pause", "music"): lambda command: spotify.play_pause(),
     ("stop", "music"): lambda command: spotify.play_pause(),
@@ -54,15 +53,10 @@ COMMANDS = {
     ("mute", "music"): lambda command: spotify.mute(),
     ("play", "by"): lambda command: spotify.play_artist_song(command.split("by ")[1].strip(), command.split("play ")[1].split(" by ")[0].strip()),
     ("play",): lambda command: spotify.play_artist(command.replace("play ", "")),
+    ("clear", "queue"): lambda command: spotify.clear_queue(),
 
-    # MISTRAL COMMANDS
-    # replace this with semantic analysis
-    ("what",): lambda command: mistral.call_mistral_with_question(command), 
-    ("who",): lambda command: mistral.call_mistral_with_question(command), 
-    ("where",): lambda command: mistral.call_mistral_with_question(command), 
-    ("when",): lambda command: mistral.call_mistral_with_question(command), 
-    ("why",): lambda command: mistral.call_mistral_with_question(command), 
-    ("how",): lambda command: mistral.call_mistral_with_question(command), 
+    # MISTRAL
+    ("question",): lambda command: mistral.call_mistral_with_question(command), 
     ("thanks",): lambda command: os.system("taskkill /f /im WindowsTerminal.exe"),  # Close terminal after thanking
 }
 COMMAND = "" 
@@ -73,6 +67,7 @@ def action(command):
     for keywords, func in COMMANDS.items():
         contains_all = all(word in command for word in keywords)
         if contains_all:
+            print(f"Executing command: {keywords}")
             func(command)
             return
     print("No matching command found.")
@@ -86,9 +81,9 @@ def callback(recognizer, audio):
         COMMAND = command  # Update global command
         action(command)
     except sr.UnknownValueError:
-        print("Google Speech Recognition could not understand audio")
+        pass
     except sr.RequestError as e:
-        print("Could not request results from Google Speech Recognition service; {0}".format(e))
+        pass
 
 # INITIALIZE RECOGNITION
 r = sr.Recognizer()

@@ -207,11 +207,8 @@ def exchange_code_for_tokens(auth_code, code_verifier):
         if response.status_code == 200:
             token_data = response.json()
             print(f"Token exchange successful")
-            print(f"Received token keys: {list(token_data.keys())}")
             return token_data
         else:
-            print(f"Token exchange failed: {response.status_code}")
-            print(f"Response: {response.text}")
             return None
     except Exception as e:
         print(f"Error during token exchange: {e}")
@@ -225,9 +222,7 @@ def save_tokens(token_data):
             f.write(f"refresh_token={token_data.get('refresh_token', '')}\n")
             f.write(f"expires_in={token_data.get('expires_in', '')}\n")
             f.write(f"token_type={token_data.get('token_type', '')}\n")
-        print(f"Tokens saved successfully to {token_file}")
     except Exception as e:
-        print(f"Error saving tokens: {e}")
         raise
 
 def load_tokens():
@@ -243,10 +238,8 @@ def load_tokens():
                     key, value = line.strip().split('=', 1)
                     tokens[key] = value
         print(f"Tokens loaded successfully from {token_file}")
-        print(f"Available token keys: {list(tokens.keys())}")
         return tokens
     except Exception as e:
-        print(f"Error loading tokens: {e}")
         return None
 
 def refresh_access_token(refresh_token):
@@ -263,29 +256,22 @@ def refresh_access_token(refresh_token):
         
         if response.status_code == 200:
             token_data = response.json()
-            print(f"Token refresh successful")
-            print(f"Received refresh token keys: {list(token_data.keys())}")
-            # Update the saved tokens - preserve existing data and update with new values
+          
             existing_tokens = load_tokens()
             if existing_tokens:
-                # Update existing tokens with new data
                 existing_tokens['access_token'] = token_data.get('access_token', existing_tokens.get('access_token', ''))
-                # Refresh token might not always be returned, so keep the existing one if not provided
                 if 'refresh_token' in token_data:
                     existing_tokens['refresh_token'] = token_data['refresh_token']
-                # Update other fields if present
                 if 'expires_in' in token_data:
                     existing_tokens['expires_in'] = token_data['expires_in']
                 if 'token_type' in token_data:
                     existing_tokens['token_type'] = token_data['token_type']
                 save_tokens(existing_tokens)
             else:
-                # No existing tokens, save new ones
                 save_tokens(token_data)
             return token_data.get('access_token')
         else:
             print(f"Token refresh failed: {response.status_code}")
-            print(f"Response: {response.text}")
             return None
     except Exception as e:
         print(f"Error during token refresh: {e}")
@@ -295,14 +281,12 @@ def get_valid_access_token():
     tokens = load_tokens()
     
     if not tokens:
-        print("No tokens found. Starting authorization flow...")
         token_data = get_user_authorization()
         return token_data['access_token']
     
     access_token = refresh_access_token(tokens['refresh_token'])
     
     if not access_token:
-        print("Token refresh failed. Starting new authorization flow...")
         token_data = get_user_authorization()
         return token_data['access_token']
     
