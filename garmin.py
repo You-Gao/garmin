@@ -1,12 +1,42 @@
+import ctypes
 import time
 import speech_recognition as sr
 import os
 import keyboard
+import psutil
+import whisper
 
 import helpers.mistral as mistral
 import helpers.avatar as avatar
 import helpers.win32 as win32
 import helpers.spotify as spotify
+
+def kill_other_terminals():
+    """Kill all Windows Terminal processes except the one running this script"""
+    current_pid = os.getpid()
+    try:
+        # Get all WindowsTerminal processes
+        for proc in psutil.process_iter(['pid', 'name', 'ppid']):
+            if proc.info['name'] and 'WindowsTerminal' in proc.info['name']:
+                # Check if this terminal is running our Python process or is parent of it
+                try:
+                    # Get all descendants of the terminal process
+                    terminal_proc = psutil.Process(proc.info['pid'])
+                    descendants = terminal_proc.children(recursive=True)
+                    
+                    # Check if our current process is among the descendants
+                    is_our_terminal = any(child.pid == current_pid for child in descendants)
+                    
+                    if not is_our_terminal:
+                        # This terminal is not running our script, kill it
+                        terminal_proc.terminate()
+                        print(f"Terminated terminal process PID: {proc.info['pid']}")
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+    except Exception as e:
+        print(f"Error killing terminals: {e}")
+        # Fallback to killing all terminals
+        os.system("taskkill /f /im WindowsTerminal.exe")
 
 # DEFINE COMMANDS HERE
 COMMANDS = {
@@ -53,11 +83,11 @@ COMMANDS = {
     ("mute", "music"): lambda command: spotify.mute(),
     ("play", "by"): lambda command: spotify.play_artist_song(command.split("by ")[1].strip(), command.split("play ")[1].split(" by ")[0].strip()),
     ("play",): lambda command: spotify.play_artist(command.replace("play ", "")),
-    ("clear", "queue"): lambda command: spotify.clear_queue(),
+    ("clear", "q"): lambda command: spotify.clear_queue(),
 
     # MISTRAL
     ("question",): lambda command: mistral.call_mistral_with_question(command), 
-    ("thanks",): lambda command: os.system("taskkill /f /im WindowsTerminal.exe"),  # Close terminal after thanking
+    ("thanks",): lambda command: kill_other_terminals(),  # Close all terminals except current one
 }
 COMMAND = "" 
 
@@ -76,7 +106,7 @@ def action(command):
 def callback(recognizer, audio):
     global COMMAND
     try:
-        command = recognizer.recognize_google(audio).lower()
+        command = recognizer.recognize_whisper(audio).lower()
         print(command)
         COMMAND = command  # Update global command
         action(command)
@@ -89,14 +119,18 @@ def callback(recognizer, audio):
 r = sr.Recognizer()
 m = sr.Microphone()
 
-r.pause_threshold = .7                      # How long to wait before considering speech ended
-r.phrase_threshold = .3                     # Minimum audio length to consider as speech
-r.non_speaking_duration = .7                # Minimum silence duration to split phrases
-r.dynamic_energy_adjustment_damping = 0.15  # Reduced for faster response
-r.energy_threshold = 500                    # Set a higher threshold for better noise handling
+r.pause_threshold = .5                      # How long to wait before considering speech ended
+r.phrase_threshold = .2                     # Minimum audio length to consider as speech
+r.non_speaking_duration = .5                # Minimum silence duration to split phrases
 
 with m as source: r.adjust_for_ambient_noise(source)
 r.listen_in_background(m, callback)
+
+# HIDE CONSOLE
+import sys,ctypes 
+
+if sys.platform == "win32":
+    ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 0)
 
 # MAIN LOOP to UPDATE AVATAR ANIMATION AND RESPOND TO COMMANDS
 last_animation = None
