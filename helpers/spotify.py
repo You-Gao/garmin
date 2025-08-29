@@ -215,6 +215,7 @@ def clear_queue():
             skip_current_track()
             
     QUEUED_TRACKS.clear()
+    skip_current_track()
     return
 
 def get_queue():

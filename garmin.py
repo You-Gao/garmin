@@ -4,7 +4,6 @@ import speech_recognition as sr
 import os
 import keyboard
 import psutil
-import whisper
 
 import helpers.mistral as mistral
 import helpers.avatar as avatar
@@ -106,7 +105,7 @@ def action(command):
 def callback(recognizer, audio):
     global COMMAND
     try:
-        command = recognizer.recognize_whisper(audio).lower()
+        command = recognizer.recognize_google(audio).lower()
         print(command)
         COMMAND = command  # Update global command
         action(command)
