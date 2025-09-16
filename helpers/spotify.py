@@ -24,7 +24,6 @@ def send_key(vk_code):
         user32.keybd_event(vk_code, 0, 0, 0)
         time.sleep(0.05)
         user32.keybd_event(vk_code, 0, KEYEVENTF_KEYUP, 0)
-        print(f"Sent virtual key: {hex(vk_code)}")
         return True
     except Exception as e:
         print(f"Error sending key: {e}")

@@ -67,7 +67,7 @@ COMMANDS = {
     ("go", "to", "steam"): lambda command: win32.make_window_active("Steam"),
     
     # GOOGLE CHROME
-    ("google",): lambda command: os.system(rf'start "" "https://www.google.com/search?q={command}"') if command.startswith("google") else None,
+    ("google",): lambda command: os.system(rf'start "" "https://www.google.com/search?q={command}"') if not command == "google" and command.startswith("google") else None,
 
     # SPOTIFY 
     ("play", "music"): lambda command: spotify.play_pause(),
