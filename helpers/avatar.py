@@ -87,7 +87,6 @@ def change_gif(new_gif_name):
                 animated_gif.frames = new_frames
                 animated_gif.current_frame = 0
                 current_gif_name = new_gif_name
-                print(f"Changed to: {new_gif_name}")
         except Exception as e:
             print(f"Error changing GIF: {e}")
 
@@ -126,13 +125,11 @@ def setup_gui(file_name):
 
 def start_gui_thread(file_name="gengar"):
     global gui_thread, requested_gif_name
-    print(f"Starting avatar: {file_name}")
     
     # If GUI is already running, just request a GIF change
     try:
         if root and root.winfo_exists():
             requested_gif_name = f"gifs/{file_name}.gif"
-            print(f"Requested GIF change to: {file_name}")
             return gui_thread
     except tk.TclError:
         # Window was destroyed, need to start new one

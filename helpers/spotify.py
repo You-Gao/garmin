@@ -124,8 +124,13 @@ def find_artist(artist_name):
 
 def play_artist(artist_name):
     headers = get_headers(user_specific=True)
+    
     if not headers:
         print("Failed to get Spotify access token")
+        return
+    
+    if artist_name == "":
+        print("No artist name provided")
         return
         
     artist = find_artist(artist_name)

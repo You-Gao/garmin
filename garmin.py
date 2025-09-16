@@ -67,7 +67,7 @@ COMMANDS = {
     ("go", "to", "steam"): lambda command: win32.make_window_active("Steam"),
     
     # GOOGLE CHROME
-    ("google",): lambda command: os.system(rf'start "" "https://www.google.com/search?q={command}"'),
+    ("google",): lambda command: os.system(rf'start "" "https://www.google.com/search?q={command}"') if command.startswith("google") else None,
 
     # SPOTIFY 
     ("play", "music"): lambda command: spotify.play_pause(),
@@ -99,15 +99,14 @@ def action(command):
             print(f"Executing command: {keywords}")
             func(command)
             return
-    print("No matching command found.")
     return
 
 def callback(recognizer, audio):
     global COMMAND
     try:
         command = recognizer.recognize_google(audio).lower()
-        print(command)
         COMMAND = command  # Update global command
+        print(COMMAND)
         action(command)
     except sr.UnknownValueError:
         pass
