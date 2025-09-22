@@ -157,12 +157,10 @@ def play_artist_song(artist_name, song_name):
         }
         print(f"Searching for song: {song_name} by {artist_name}")
         response = requests.get(url, headers=headers, params=data)
-        print(response.text)
         if response.status_code == 200:
             tracks = response.json().get("tracks", {}).get("items", [])
             if tracks:
                 track_uri = tracks[0]['uri']
-                print(track_uri)
                 play_url = "https://api.spotify.com/v1/me/player/queue"
                 params = {
                     "uri": track_uri

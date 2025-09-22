@@ -10,37 +10,16 @@ import helpers.avatar as avatar
 import helpers.win32 as win32
 import helpers.spotify as spotify
 
-def kill_other_terminals():
-    """Kill all Windows Terminal processes except the one running this script"""
-    current_pid = os.getpid()
-    try:
-        # Get all WindowsTerminal processes
-        for proc in psutil.process_iter(['pid', 'name', 'ppid']):
-            if proc.info['name'] and 'WindowsTerminal' in proc.info['name']:
-                # Check if this terminal is running our Python process or is parent of it
-                try:
-                    # Get all descendants of the terminal process
-                    terminal_proc = psutil.Process(proc.info['pid'])
-                    descendants = terminal_proc.children(recursive=True)
-                    
-                    # Check if our current process is among the descendants
-                    is_our_terminal = any(child.pid == current_pid for child in descendants)
-                    
-                    if not is_our_terminal:
-                        # This terminal is not running our script, kill it
-                        terminal_proc.terminate()
-                        print(f"Terminated terminal process PID: {proc.info['pid']}")
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    continue
-    except Exception as e:
-        print(f"Error killing terminals: {e}")
-        # Fallback to killing all terminals
-        os.system("taskkill /f /im WindowsTerminal.exe")
 
 # DEFINE COMMANDS HERE
 COMMANDS = {
     ("hate", "game"): lambda command: keyboard.send('alt+f4'),
     ("clip", "that"): lambda command: print("Making a clip..."),
+    
+    # WINDOWS
+    ("lock", "pc"): lambda command: os.system("rundll32.exe user32.dll,LockWorkStation"),
+    ("shutdown", "pc"): lambda command: os.system("shutdown /s /t 1"),
+    ("restart", "pc"): lambda command: os.system("shutdown /r /t 1"),
     
     # OPEN/CLOSE COMMANDS
     ("open", "chrome"): lambda command: os.system(r'start "" "C:\Program Files\Google\Chrome\Application\chrome.exe"'),
@@ -86,8 +65,8 @@ COMMANDS = {
 
     # MISTRAL
     ("question",): lambda command: mistral.call_mistral_with_question(command), 
-    ("thanks",): lambda command: kill_other_terminals(),  # Close all terminals except current one
 }
+
 COMMAND = "" 
 
 def action(command):

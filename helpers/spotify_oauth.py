@@ -237,7 +237,6 @@ def load_tokens():
                 if '=' in line:
                     key, value = line.strip().split('=', 1)
                     tokens[key] = value
-        print(f"Tokens loaded successfully from {token_file}")
         return tokens
     except Exception as e:
         return None
