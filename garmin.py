@@ -73,7 +73,8 @@ def action(command):
     global COMMAND
     COMMAND = command  # Store command globally for main loop
     for keywords, func in COMMANDS.items():
-        contains_all = all(word in command for word in keywords)
+        command_words = command.split()
+        contains_all = all((word in command_words for word in keywords))
         if contains_all:
             print(f"Executing command: {keywords}")
             func(command)
