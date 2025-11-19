@@ -190,17 +190,16 @@ def queue_tracks(tracks):
 
     for track in random.sample(tracks, min(5, len(tracks))):
         track_uri = track['uri']
-        print(track_uri)
         queue_url = "https://api.spotify.com/v1/me/player/queue"
         params = {
             "uri": track_uri
         }
         queue_response = requests.post(queue_url, headers=headers, params=params)
         if queue_response.status_code == 200:
-            print(f"Queued '{track['name']}' by {track['artists'][0]['name']}")
+            print(f"Queued '{track['name']}'")
             QUEUED_TRACKS.append(track)
         else:
-            print(f"Failed to queue track: {queue_response.status_code}")
+            print(f"{queue_response.status_code}")
 
 def clear_queue():
     global QUEUED_TRACKS
@@ -239,8 +238,8 @@ def skip_current_track():
 
     skip_url = "https://api.spotify.com/v1/me/player/next"
     response = requests.post(skip_url, headers=headers)
-    if response.status_code == 204:
-        print("Skipped to next track")
+    if response.status_code == 200:
+        return 0
     else:
         print(f"Failed to skip track: {response.status_code}")
 

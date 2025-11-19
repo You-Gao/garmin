@@ -113,7 +113,19 @@ def setup_gui(file_name):
     root.wm_attributes('-transparentcolor', 'black')  # Make black pixels transparent
     root.configure(bg='black')  # Set background to black (will be transparent)
     
-    root.geometry("200x200+1100+625")  # width x height + x_offset + y_offset
+    # Get screen dimensions and calculate bottom right position
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    
+    # Window dimensions
+    window_width = 200
+    window_height = 200
+    
+    # Calculate position for bottom right corner with small margin
+    x_offset = screen_width - window_width - 20  # 20px margin from right edge
+    y_offset = screen_height - window_height - 60  # 60px margin from bottom (to account for taskbar)
+    
+    root.geometry(f"{window_width}x{window_height}+{x_offset}+{y_offset}")
     gif_path = os.path.join(os.path.dirname(__file__), f"gifs/{file_name}.gif")
     
     animated_gif = AnimatedGIF(root, gif_path)
