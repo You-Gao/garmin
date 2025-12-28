@@ -3,7 +3,6 @@ import time
 import speech_recognition as sr
 import os
 import keyboard
-import psutil
 
 import helpers.mistral as mistral
 import helpers.avatar as avatar
@@ -18,7 +17,7 @@ COMMANDS = {
     
     # WINDOWS
     ("lock", "pc"): lambda command: os.system("rundll32.exe user32.dll,LockWorkStation"),
-    ("shutdown", "pc"): lambda command: os.system("shutdown /s /t 1"),
+    ("shut", "down", "pc"): lambda command: os.system("shutdown /s /t 1"),
     ("restart", "pc"): lambda command: os.system("shutdown /r /t 1"),
     
     # OPEN/CLOSE COMMANDS
@@ -98,7 +97,7 @@ r = sr.Recognizer()
 m = sr.Microphone()
 
 r.pause_threshold = .5                      # How long to wait before considering speech ended
-r.phrase_threshold = .2                     # Minimum audio length to consider as speech
+r.phrase_threshold = .1                     # Minimum audio length to consider as speech
 r.non_speaking_duration = .5                # Minimum silence duration to split phrases
 
 with m as source: r.adjust_for_ambient_noise(source)

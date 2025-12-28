@@ -118,12 +118,12 @@ def setup_gui(file_name):
     screen_height = root.winfo_screenheight()
     
     # Window dimensions
-    window_width = 200
-    window_height = 200
+    window_width = 50
+    window_height = 75
     
     # Calculate position for bottom right corner with small margin
-    x_offset = screen_width - window_width - 20  # 20px margin from right edge
-    y_offset = screen_height - window_height - 60  # 60px margin from bottom (to account for taskbar)
+    x_offset = screen_width - window_width - 20
+    y_offset = screen_height - window_height 
     
     root.geometry(f"{window_width}x{window_height}+{x_offset}+{y_offset}")
     gif_path = os.path.join(os.path.dirname(__file__), f"gifs/{file_name}.gif")
