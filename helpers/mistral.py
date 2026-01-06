@@ -7,11 +7,6 @@ load_dotenv()
 from mistralai import Mistral
 import subprocess
 
-try:
-    from helpers import avatar
-except ImportError:
-    import avatar
-
 api_key = os.environ["MISTRAL_API_KEY"]
 model = "mistral-small-2503"
 def markdown_to_ansi(text):
@@ -60,16 +55,16 @@ Avoid complex formatting, tables, or extensive markdown since this will be displ
 
 def question(text):
     """Ask a question to the Mistral AI model and return the response."""
-    response = client.chat.stream(
+    stream = client.chat.stream(
         model=model,
         messages=[
             {"role": "user", "content": text},
             {"role": "system", "content": system_prompt}
         ]
     )
-    return response
+    return stream 
 
-def process_question_directly(question_text):
+def process_question(question_text):
     print(f"\nAsking Mistral: {str.title(question_text)}")
     print("-" * 50)
     
@@ -83,14 +78,16 @@ def process_question_directly(question_text):
                 content = chunk.data.choices[0].delta.content
                 full_response += content
                 print(markdown_to_ansi(content), end="", flush=True)
-
+                
         print("\n" + "-" * 50)
-        print("Response complete. Press Enter to continue...")
-        input()
+        print("Response complete.")
+        print("Ask another question or Enter to exit.")
+        q = input()
+        if q: process_question(q)
         
     except Exception as e:
         print(f"Error calling Mistral API: {e}")
-        print("Press Enter to continue...")
+        print("Press Enter to continue or X to exit")
         input()
 
 def call_mistral_with_question(full_command):
@@ -106,7 +103,7 @@ def call_mistral_with_question(full_command):
 if __name__ == "__main__":
     if len(sys.argv) > 1: # RUNS AS A NEW PROCESS
         question_text = " ".join(sys.argv[1:])
-        process_question_directly(question_text)
+        process_question(question_text)
         
     else:
-        process_question_directly("question What is the capital of France?")
+        process_question("What is the capital of France?")

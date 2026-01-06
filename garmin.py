@@ -21,19 +21,19 @@ COMMANDS = {
     ("restart", "pc"): lambda command: os.system("shutdown /r /t 1"),
     
     # OPEN/CLOSE COMMANDS
-    ("open", "chrome"): lambda command: os.system(r'start "" "C:\Program Files\Google\Chrome\Application\chrome.exe"'),
+    ("open", "chrome"): lambda command: os.system("start chrome"),
     ("close", "chrome"): lambda command: os.system("taskkill /f /im chrome.exe"),
-    ("open", "notepad"): lambda command: os.system(r'start "" "C:\Windows\System32\notepad.exe"'),
+    ("open", "notepad"): lambda command: os.system("notepad"),
     ("close", "notepad"): lambda command: os.system("taskkill /f /im notepad.exe"),
-    ("open", "code"): lambda command: os.system(r'start "" "C:\Users\commo\AppData\Local\Programs\Microsoft VS Code\Code.exe"'),
+    ("open", "code"): lambda command: os.system("code"),
     ("close", "code"): lambda command: os.system("taskkill /f /im Code.exe"),
     ("open", "habitica"): lambda command: os.system(r'start "" "https://habitica.com"'),
     ("close", "habitica"): lambda command: print("Habitica is a web app, no process to close."),
-    ("open", "spotify"): lambda command: os.system(r'start "" "C:\Users\commo\AppData\Roaming\Spotify\Spotify.exe"'),
+    ("open", "spotify"): lambda command: os.system("start spotify"),
     ("close", "spotify"): lambda command: os.system("taskkill /f /im Spotify.exe"),
-    ("open", "discord"): lambda command: os.system(r'start "" "C:\Users\commo\AppData\Local\Discord\Update.exe" --processStart Discord.exe'),
+    ("open", "discord"): lambda command: os.system("start discord"),
     ("close", "discord"): lambda command: os.system("taskkill /f /im Discord.exe"),
-    ("open", "steam"): lambda command: os.system(r'start "" "C:\Program Files (x86)\Steam\Steam.exe"'),
+    ("open", "steam"): lambda command: os.system("start steam"),
     ("close", "steam"): lambda command: os.system("taskkill /f /im Steam.exe"),
     
     # GOTOs (A bit buggy if using with Komorebic)
@@ -61,6 +61,10 @@ COMMANDS = {
     ("spotify","play", "by"): lambda command: spotify.play_artist_song(command.split("by ")[1].strip(), command.split("play ")[1].split(" by ")[0].strip()),
     ("spotify","play",): lambda command: spotify.play_artist(command.replace("play ", "")),
     ("clear", "q"): lambda command: spotify.clear_queue(),
+    
+    # AUDIO
+    ("play", "music"): lambda command: spotify.play_pause(),
+    ("pause", "music"): lambda command: spotify.play_pause(),
 
     # MISTRAL
     ("question",): lambda command: mistral.call_mistral_with_question(command), 
@@ -102,12 +106,6 @@ r.non_speaking_duration = .5                # Minimum silence duration to split 
 
 with m as source: r.adjust_for_ambient_noise(source)
 r.listen_in_background(m, callback)
-
-# HIDE CONSOLE
-import sys,ctypes 
-
-if sys.platform == "win32":
-    ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 0)
 
 # MAIN LOOP to UPDATE AVATAR ANIMATION AND RESPOND TO COMMANDS
 last_animation = None
