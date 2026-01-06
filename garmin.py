@@ -63,8 +63,8 @@ COMMANDS = {
     ("clear", "q"): lambda command: spotify.clear_queue(),
     
     # AUDIO
-    ("play", "music"): lambda command: spotify.play_pause(),
-    ("pause", "music"): lambda command: spotify.play_pause(),
+    ("play"): lambda command: spotify.play_pause(),
+    ("pause"): lambda command: spotify.play_pause(),
 
     # MISTRAL
     ("question",): lambda command: mistral.call_mistral_with_question(command), 
