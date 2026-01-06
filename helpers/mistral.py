@@ -102,8 +102,8 @@ def call_mistral_with_question(full_command):
 
 if __name__ == "__main__":
     if len(sys.argv) > 1: # RUNS AS A NEW PROCESS
+        print(sys.argv)
         question_text = " ".join(sys.argv[1:])
         process_question(question_text)
-        
     else:
-        process_question("What is the capital of France?")
+        process_question()
